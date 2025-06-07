@@ -48,7 +48,7 @@ import {
 } from '@/lib/json-utils';
 
 export default function JSONFormatter() {
-  const { settings, toggleTheme, setIndent, isLoaded } = useSettings();
+  const { settings, toggleTheme, isLoaded } = useSettings();
   
   // State
   const [jsonInput, setJsonInput] = useState('');
@@ -56,7 +56,7 @@ export default function JSONFormatter() {
   const [searchQuery, setSearchQuery] = useState('');
   const [jsonPathQuery, setJsonPathQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'editor' | 'tree' | 'compare'>('editor');
-  const [lastAction, setLastAction] = useState<'format' | 'minify' | null>(null);
+  const [lastAction, setLastAction] = useState<'format' | 'minify' | 'sort' | 'copy' | 'download' | 'upload' | 'clear' | null>(null);
 
   // Parsed JSON and validation
   const parseResult: JSONParseResult = useMemo(() => {
@@ -177,14 +177,14 @@ export default function JSONFormatter() {
     }
     
     try {
-      const formatted = formatJSON(parseResult.data, { indent: settings.indent });
+      const formatted = formatJSON(parseResult.data, { indent: 2 });
       setJsonInput(formatted);
       setLastAction('format');
       toast.success('JSON formatted successfully');
     } catch (error) {
       toast.error('Failed to format JSON');
     }
-  }, [parseResult, settings.indent]);
+  }, [parseResult]);
 
   const handleMinify = useCallback(() => {
     if (!parseResult.isValid || !parseResult.data) {
@@ -210,18 +210,19 @@ export default function JSONFormatter() {
     
     try {
       const sorted = sortObjectKeys(parseResult.data);
-      const formatted = formatJSON(sorted, { indent: settings.indent });
+      const formatted = formatJSON(sorted, { indent: 2 });
       setJsonInput(formatted);
-      setLastAction('format');
+      setLastAction('sort');
       toast.success('JSON keys sorted successfully');
     } catch (error) {
       toast.error('Failed to sort JSON keys');
     }
-  }, [parseResult, settings.indent]);
+  }, [parseResult]);
 
   const handleCopy = useCallback(async () => {
     try {
       await copyToClipboard(jsonInput);
+      setLastAction('copy');
       toast.success('JSON copied to clipboard');
     } catch (error) {
       toast.error('Failed to copy to clipboard');
@@ -236,6 +237,7 @@ export default function JSONFormatter() {
     
     try {
       downloadFile(jsonInput, 'data.json', 'application/json');
+      setLastAction('download');
       toast.success('JSON file downloaded');
     } catch (error) {
       toast.error('Failed to download JSON file');
@@ -254,7 +256,7 @@ export default function JSONFormatter() {
     readFile(file)
       .then(content => {
         setJsonInput(content);
-        setLastAction(null);
+        setLastAction('upload');
         toast.success('JSON file loaded successfully');
       })
       .catch(() => {
@@ -270,7 +272,7 @@ export default function JSONFormatter() {
     setSearchQuery('');
     setJsonPathQuery('');
     setActiveTab('editor');
-    setLastAction(null);
+    setLastAction('clear');
   }, []);
 
   if (!isLoaded) {
@@ -289,12 +291,12 @@ export default function JSONFormatter() {
       {/* Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center gap-3">
-              <FileText className="h-8 w-8 text-primary" />
+              <FileText className="h-6 w-6 md:h-8 md:w-8 text-primary" />
               <div>
-                <h1 className="text-2xl font-bold">JSON Formatter & Explorer</h1>
-                <p className="text-sm text-muted-foreground">Format, validate, and explore JSON data</p>
+                <h1 className="text-xl md:text-2xl font-bold">JSON Formatter & Explorer</h1>
+                <p className="text-xs md:text-sm text-muted-foreground hidden sm:block">Format, validate, and explore JSON data</p>
               </div>
             </div>
             
@@ -306,16 +308,6 @@ export default function JSONFormatter() {
               >
                 {settings.theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               </Button>
-              
-              <Select value={String(settings.indent)} onValueChange={(value) => setIndent(Number(value) as 2 | 4)}>
-                <SelectTrigger className="w-20">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="2">2</SelectItem>
-                  <SelectItem value="4">4</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
           </div>
         </div>
@@ -327,88 +319,115 @@ export default function JSONFormatter() {
           <div className="lg:col-span-3 space-y-4">
             {/* Action Bar */}
             <div className="flex flex-wrap items-center gap-2 p-3 bg-card rounded-lg border">
-              <Button 
-                onClick={handleFormat} 
-                disabled={!parseResult.isValid} 
-                size="sm"
-                variant={lastAction === 'format' ? 'default' : 'outline'}
-              >
-                <Maximize2 className="h-4 w-4 mr-2" />
-                Format
-              </Button>
-              
-              <Button 
-                onClick={handleMinify} 
-                disabled={!parseResult.isValid} 
-                size="sm" 
-                variant={lastAction === 'minify' ? 'default' : 'outline'}
-              >
-                <Minimize2 className="h-4 w-4 mr-2" />
-                Minify
-              </Button>
-              
-              <Button onClick={handleSortKeys} disabled={!parseResult.isValid} size="sm" variant="outline">
-                <RotateCcw className="h-4 w-4 mr-2" />
-                Sort Keys
-              </Button>
-              
-              <Separator orientation="vertical" className="h-6" />
-              
-              <Button onClick={handleCopy} size="sm" variant="outline">
-                <Copy className="h-4 w-4 mr-2" />
-                Copy
-              </Button>
-              
-              <Button onClick={handleDownloadJSON} size="sm" variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                JSON
-              </Button>
-              
-              <div className="relative">
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleFileUpload}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
-                <Button size="sm" variant="outline">
-                  <Upload className="h-4 w-4 mr-2" />
-                  Upload
+              <div className="flex flex-wrap items-center gap-2 w-full">
+                <Button 
+                  onClick={handleFormat} 
+                  disabled={!parseResult.isValid} 
+                  size="sm"
+                  variant={lastAction === 'format' ? 'default' : 'outline'}
+                  className="min-h-[36px]"
+                >
+                  <Maximize2 className="h-4 w-4 mr-2" />
+                  Format
+                </Button>
+                
+                <Button 
+                  onClick={handleMinify} 
+                  disabled={!parseResult.isValid} 
+                  size="sm" 
+                  variant={lastAction === 'minify' ? 'default' : 'outline'}
+                  className="min-h-[36px]"
+                >
+                  <Minimize2 className="h-4 w-4 mr-2" />
+                  Minify
+                </Button>
+                
+                <Button 
+                  onClick={handleSortKeys} 
+                  disabled={!parseResult.isValid} 
+                  size="sm" 
+                  variant={lastAction === 'sort' ? 'default' : 'outline'}
+                  className="min-h-[36px]"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Sort Keys
+                </Button>
+                
+                <Button 
+                  onClick={handleCopy} 
+                  size="sm" 
+                  variant={lastAction === 'copy' ? 'default' : 'outline'} 
+                  className="min-h-[36px]"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy
+                </Button>
+                
+                <Button 
+                  onClick={handleDownloadJSON} 
+                  size="sm" 
+                  variant={lastAction === 'download' ? 'default' : 'outline'} 
+                  className="min-h-[36px]"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept=".json"
+                    onChange={handleFileUpload}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                  <Button 
+                    size="sm" 
+                    variant={lastAction === 'upload' ? 'default' : 'outline'} 
+                    className="min-h-[36px]"
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload
+                  </Button>
+                </div>
+                
+                <Button 
+                  onClick={handleClear} 
+                  size="sm" 
+                  variant={lastAction === 'clear' ? 'default' : 'outline'} 
+                  className="min-h-[36px]"
+                >
+                  Clear
                 </Button>
               </div>
-              
-              <Button onClick={handleClear} size="sm" variant="outline">
-                Clear
-              </Button>
             </div>
 
             {/* Main Editor/Tree View */}
             <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'editor' | 'tree' | 'compare')}>
-              <div className="flex items-center justify-between">
-                <TabsList>
-                  <TabsTrigger value="editor">
-                    <FileText className="h-4 w-4 mr-2" />
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <TabsList className="grid w-full grid-cols-3 sm:w-auto sm:flex">
+                  <TabsTrigger value="editor" className="text-xs sm:text-sm py-2">
+                    <FileText className="h-4 w-4 mr-1 sm:mr-2" />
                     Editor
                   </TabsTrigger>
-                  <TabsTrigger value="tree" disabled={!parseResult.isValid}>
-                    <TreePine className="h-4 w-4 mr-2" />
+                  <TabsTrigger value="tree" disabled={!parseResult.isValid} className="text-xs sm:text-sm py-2">
+                    <TreePine className="h-4 w-4 mr-1 sm:mr-2" />
                     Tree View
                   </TabsTrigger>
-                  <TabsTrigger value="compare">
-                    <GitCompare className="h-4 w-4 mr-2" />
+                  <TabsTrigger value="compare" className="text-xs sm:text-sm py-2">
+                    <GitCompare className="h-4 w-4 mr-1 sm:mr-2" />
                     Compare
                   </TabsTrigger>
                 </TabsList>
                 
                 {/* Validation Status */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
                   {parseResult.isValid ? (
-                    <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                    <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs">
                       <CheckCircle className="h-3 w-3 mr-1" />
                       Valid JSON
                     </Badge>
                   ) : (
-                    <Badge variant="destructive">
+                    <Badge variant="destructive" className="text-xs">
                       <AlertCircle className="h-3 w-3 mr-1" />
                       Invalid JSON
                     </Badge>
@@ -428,7 +447,7 @@ export default function JSONFormatter() {
                       }
                     }}
                     placeholder="Paste your JSON here..."
-                    className="min-h-[400px] font-mono text-sm"
+                    className="min-h-[300px] sm:min-h-[400px] font-mono text-xs sm:text-sm"
                     spellCheck={false}
                   />
                   
@@ -461,23 +480,23 @@ export default function JSONFormatter() {
                   />
                 ) : (
                   <div className="flex items-center justify-center h-32 border rounded-lg bg-muted/50">
-                    <p className="text-muted-foreground">Please enter valid JSON to view tree structure</p>
+                    <p className="text-muted-foreground text-center text-sm px-4">Please enter valid JSON to view tree structure</p>
                   </div>
                 )}
               </TabsContent>
 
               <TabsContent value="compare" className="space-y-4">
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  <div className="space-y-2">
+                  <div className="space-y-2 order-1">
                     <div className="flex items-center justify-between">
-                      <Label className="font-medium">JSON A (Original)</Label>
+                      <Label className="font-medium text-sm">JSON A (Original)</Label>
                       {parseResult.isValid ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Valid
                         </Badge>
                       ) : (
-                        <Badge variant="destructive">
+                        <Badge variant="destructive" className="text-xs">
                           <AlertCircle className="h-3 w-3 mr-1" />
                           Invalid
                         </Badge>
@@ -487,21 +506,21 @@ export default function JSONFormatter() {
                       value={jsonInput}
                       onChange={(e) => setJsonInput(e.target.value)}
                       placeholder="Paste first JSON here..."
-                      className="min-h-[300px] font-mono text-sm"
+                      className="min-h-[200px] sm:min-h-[300px] font-mono text-xs sm:text-sm"
                       spellCheck={false}
                     />
                   </div>
                   
-                  <div className="space-y-2">
+                  <div className="space-y-2 order-2">
                     <div className="flex items-center justify-between">
-                      <Label className="font-medium">JSON B (Compare)</Label>
+                      <Label className="font-medium text-sm">JSON B (Compare)</Label>
                       {parseResultB.isValid ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                        <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs">
                           <CheckCircle className="h-3 w-3 mr-1" />
                           Valid
                         </Badge>
                       ) : (
-                        <Badge variant="destructive">
+                        <Badge variant="destructive" className="text-xs">
                           <AlertCircle className="h-3 w-3 mr-1" />
                           Invalid
                         </Badge>
@@ -511,7 +530,7 @@ export default function JSONFormatter() {
                       value={jsonInputB}
                       onChange={(e) => setJsonInputB(e.target.value)}
                       placeholder="Paste second JSON here..."
-                      className="min-h-[300px] font-mono text-sm"
+                      className="min-h-[200px] sm:min-h-[300px] font-mono text-xs sm:text-sm"
                       spellCheck={false}
                     />
                   </div>
@@ -519,7 +538,7 @@ export default function JSONFormatter() {
 
                 {/* Comparison Results */}
                 {compareResults && (
-                  <div className="space-y-3">
+                  <div className="space-y-3 order-3">
                     <div className="flex items-center justify-between">
                       <Label className="font-medium">Differences</Label>
                       <Badge variant="secondary">
@@ -542,7 +561,7 @@ export default function JSONFormatter() {
                             diff.type === 'removed' ? 'bg-red-100 dark:bg-red-900/30 border-red-200 dark:border-red-800' :
                             'bg-yellow-100 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-800'
                           } border`}>
-                            <div className="flex items-center gap-2 mb-1">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
                               <Badge variant={
                                 diff.type === 'added' ? 'default' :
                                 diff.type === 'removed' ? 'destructive' : 
@@ -550,20 +569,20 @@ export default function JSONFormatter() {
                               } className="text-xs">
                                 {diff.type.toUpperCase()}
                               </Badge>
-                              <span className="font-mono text-xs">{diff.path}</span>
+                              <span className="font-mono text-xs break-all">{diff.path}</span>
                             </div>
                             
                             {diff.type === 'changed' && (
                               <div className="space-y-1 text-xs">
                                 <div className="flex items-start gap-2">
                                   <span className="text-red-600 dark:text-red-400 font-medium">-</span>
-                                  <span className="font-mono bg-red-50 dark:bg-red-900/20 px-1 rounded">
+                                  <span className="font-mono bg-red-50 dark:bg-red-900/20 px-1 rounded break-all">
                                     {JSON.stringify(diff.valueA)}
                                   </span>
                                 </div>
                                 <div className="flex items-start gap-2">
                                   <span className="text-green-600 dark:text-green-400 font-medium">+</span>
-                                  <span className="font-mono bg-green-50 dark:bg-green-900/20 px-1 rounded">
+                                  <span className="font-mono bg-green-50 dark:bg-green-900/20 px-1 rounded break-all">
                                     {JSON.stringify(diff.valueB)}
                                   </span>
                                 </div>
@@ -572,7 +591,7 @@ export default function JSONFormatter() {
                             
                             {diff.type === 'added' && (
                               <div className="text-xs mt-1">
-                                <span className="font-mono bg-green-50 dark:bg-green-900/20 px-1 rounded">
+                                <span className="font-mono bg-green-50 dark:bg-green-900/20 px-1 rounded break-all">
                                   {JSON.stringify(diff.valueB)}
                                 </span>
                               </div>
@@ -580,7 +599,7 @@ export default function JSONFormatter() {
                             
                             {diff.type === 'removed' && (
                               <div className="text-xs mt-1">
-                                <span className="font-mono bg-red-50 dark:bg-red-900/20 px-1 rounded">
+                                <span className="font-mono bg-red-50 dark:bg-red-900/20 px-1 rounded break-all">
                                   {JSON.stringify(diff.valueA)}
                                 </span>
                               </div>
@@ -621,7 +640,7 @@ export default function JSONFormatter() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4">
+          <div className="space-y-4 lg:sticky lg:top-6 lg:self-start">
             {/* Search */}
             <div className="bg-card p-4 rounded-lg border space-y-3">
               <div className="flex items-center gap-2">
@@ -634,6 +653,7 @@ export default function JSONFormatter() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search keys and values..."
                 disabled={!parseResult.isValid}
+                className="text-sm"
               />
               
               {searchResults.length > 0 && (
@@ -644,7 +664,7 @@ export default function JSONFormatter() {
                   <div className="max-h-32 overflow-y-auto space-y-1">
                     {searchResults.slice(0, 10).map((result, index) => (
                       <div key={index} className="text-xs p-2 bg-muted rounded">
-                        <div className="font-mono">{result.path}</div>
+                        <div className="font-mono break-all">{result.path}</div>
                         <div className="text-muted-foreground truncate">
                           {result.type === 'key' ? `Key: ${result.key}` : `Value: ${String(result.value)}`}
                         </div>
@@ -667,12 +687,13 @@ export default function JSONFormatter() {
                 onChange={(e) => setJsonPathQuery(e.target.value)}
                 placeholder="e.g. users.0.name"
                 disabled={!parseResult.isValid}
+                className="text-sm font-mono"
               />
               
               {jsonPathQuery && (
                 <div className="space-y-2">
                   <Label className="text-xs font-medium">Result:</Label>
-                  <div className="p-2 bg-muted rounded text-xs font-mono max-h-32 overflow-auto">
+                  <div className="p-2 bg-muted rounded text-xs font-mono max-h-32 overflow-auto break-all">
                     {jsonPathResult !== null ? (
                       JSON.stringify(jsonPathResult, null, 2)
                     ) : (

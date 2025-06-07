@@ -80,12 +80,12 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({
     }
   };
 
-  const paddingLeft = depth * 20;
+  const paddingLeft = depth * 16;
 
   return (
     <div className="select-none">
       <div
-        className={`flex items-center py-1 px-2 hover:bg-muted/50 rounded cursor-pointer transition-colors ${
+        className={`flex items-center py-2 px-2 hover:bg-muted/50 rounded cursor-pointer transition-colors min-h-[44px] ${
           isHighlighted ? 'bg-yellow-100 dark:bg-yellow-900/30' : ''
         }`}
         style={{ paddingLeft: `${paddingLeft}px` }}
@@ -94,19 +94,21 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({
         <div className="flex items-center min-w-0 flex-1">
           {hasChildren ? (
             isExpanded ? (
-              <ChevronDown className="h-4 w-4 text-muted-foreground mr-1 flex-shrink-0" />
+              <ChevronDown className="h-4 w-4 text-muted-foreground mr-1 sm:mr-2 flex-shrink-0" />
             ) : (
-              <ChevronRight className="h-4 w-4 text-muted-foreground mr-1 flex-shrink-0" />
+              <ChevronRight className="h-4 w-4 text-muted-foreground mr-1 sm:mr-2 flex-shrink-0" />
             )
           ) : (
-            <div className="w-5 mr-1 flex-shrink-0" />
+            <div className="w-4 sm:w-5 mr-1 sm:mr-2 flex-shrink-0" />
           )}
           
-          <div className="flex items-center gap-2 min-w-0 flex-1">
-            {getTypeIcon(node.type)}
+          <div className="flex items-center gap-1 sm:gap-2 min-w-0 flex-1">
+            <div className="flex-shrink-0">
+              {getTypeIcon(node.type)}
+            </div>
             
             <span 
-              className={`font-medium text-sm ${
+              className={`font-medium text-xs sm:text-sm break-all ${
                 isHighlighted && searchResults?.some(r => r.key === node.key && r.type === 'key') 
                   ? 'bg-yellow-200 dark:bg-yellow-800' : ''
               }`}
@@ -114,10 +116,10 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({
               {node.key}
             </span>
             
-            <span className="text-muted-foreground">:</span>
+            <span className="text-muted-foreground text-xs sm:text-sm">:</span>
             
             <span 
-              className={`text-sm font-mono break-all ${
+              className={`text-xs sm:text-sm font-mono break-all ${
                 isHighlighted && searchResults?.some(r => 
                   String(r.value) === String(node.value) && r.type === 'value'
                 ) ? 'bg-yellow-200 dark:bg-yellow-800' : ''
@@ -134,7 +136,7 @@ const TreeNodeComponent: React.FC<TreeNodeProps> = ({
           </div>
         </div>
         
-        <Badge variant="outline" className="ml-2 text-xs">
+        <Badge variant="outline" className="ml-1 sm:ml-2 text-xs hidden xs:inline-flex">
           {node.type}
         </Badge>
       </div>
@@ -217,23 +219,23 @@ export const TreeExplorer: React.FC<TreeExplorerProps> = ({
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 px-2">
+      <div className="flex items-center gap-2 px-2 flex-wrap">
         <button
           onClick={expandAll}
-          className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+          className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 py-1 px-2 rounded hover:bg-muted/50 transition-colors min-h-[32px]"
         >
           Expand All
         </button>
-        <span className="text-muted-foreground">|</span>
+        <span className="text-muted-foreground hidden xs:inline">|</span>
         <button
           onClick={collapseAll}
-          className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+          className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 py-1 px-2 rounded hover:bg-muted/50 transition-colors min-h-[32px]"
         >
           Collapse All
         </button>
         {searchResults && searchResults.length > 0 && (
           <>
-            <span className="text-muted-foreground">|</span>
+            <span className="text-muted-foreground hidden xs:inline">|</span>
             <Badge variant="secondary" className="text-xs">
               {searchResults.length} match{searchResults.length !== 1 ? 'es' : ''}
             </Badge>
@@ -242,7 +244,7 @@ export const TreeExplorer: React.FC<TreeExplorerProps> = ({
       </div>
       
       <div className="border rounded-lg bg-card">
-        <div className="max-h-[500px] overflow-auto p-2">
+        <div className="max-h-[400px] sm:max-h-[500px] overflow-auto p-2">
           <TreeNodeComponent
             node={tree}
             depth={0}

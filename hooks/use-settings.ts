@@ -4,12 +4,10 @@ import { useState, useEffect } from 'react';
 
 export interface Settings {
   theme: 'light' | 'dark';
-  indent: 2 | 4;
 }
 
 const DEFAULT_SETTINGS: Settings = {
   theme: 'light',
-  indent: 2,
 };
 
 export function useSettings() {
@@ -61,15 +59,10 @@ export function useSettings() {
     updateSettings({ theme: settings.theme === 'light' ? 'dark' : 'light' });
   };
 
-  const setIndent = (indent: 2 | 4) => {
-    updateSettings({ indent });
-  };
-
   return {
     settings,
     isLoaded,
     updateSettings,
     toggleTheme,
-    setIndent,
   };
 } 
