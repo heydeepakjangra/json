@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { ChevronRight, ChevronDown, Braces, Brackets, Hash, Quote, ToggleLeft, Dot } from 'lucide-react';
-import { TreeNode, generateTree, searchJSON, SearchResult } from '@/lib/json-utils';
+import { TreeNode, generateTree, SearchResult } from '@/lib/json-utils';
 import { Badge } from '@/components/ui/badge';
 
 interface TreeExplorerProps {
