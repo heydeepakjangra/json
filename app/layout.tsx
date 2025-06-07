@@ -62,15 +62,12 @@ export const metadata: Metadata = {
     title: 'JSON Formatter & Explorer - Professional JSON Tools',
     description: 'Professional JSON formatter, validator, and explorer with tree view, real-time validation, JSON comparison, and more.',
     creator: '@heydeepakjangra',
-    images: ['/twitter-image.png'],
+    images: ['/og-image.png'],
   },
   viewport: {
     width: 'device-width',
     initialScale: 1,
     maximumScale: 1,
-  },
-  verification: {
-    google: 'your-google-verification-code', // Replace with actual verification code
   },
   other: {
     'theme-color': '#0F172A',
