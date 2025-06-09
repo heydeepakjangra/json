@@ -5,4 +5,19 @@ Allow: /
 Sitemap: https://json.deepakjangra.com/sitemap.xml
 
 # Crawl-delay
-Crawl-delay: 1 
+Crawl-delay: 1
+
+# Additional directives for better SEO
+# Allow access to CSS and JS files
+Allow: /_next/static/
+Allow: /favicon.ico
+Allow: /og-image.png
+Allow: /manifest.json
+
+# Disallow admin or temporary paths (if any exist in future)
+Disallow: /admin/
+Disallow: /temp/
+Disallow: /.well-known/
+
+# Host specification
+Host: https://json.deepakjangra.com 

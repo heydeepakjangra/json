@@ -1,12 +1,14 @@
 import { MetadataRoute } from 'next'
 
 export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = 'https://json.deepakjangra.com'
+  
   return [
     {
-      url: 'https://json.deepakjangra.com',
+      url: baseUrl,
       lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'weekly',
       priority: 1,
-    },
+    }
   ]
 } 
